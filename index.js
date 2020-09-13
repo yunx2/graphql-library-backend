@@ -1,4 +1,4 @@
-const { ApolloServer, gql } = require('apollo-server');
+const { ApolloServer, UserInputError, gql } = require('apollo-server');
 const { v1: uuid } = require('uuid')
 let books = require('./data/booksData')
 let authors = require('./data/authorsData')
@@ -35,6 +35,10 @@ const typeDefs = gql`
       author: String
       genres: [String!]!
     ): Book
+    editAuthor(
+      name: String!
+      born: Int!
+    ): Author
   }
 `
 
@@ -75,6 +79,15 @@ const resolvers = {
       }
       books = books.concat(book) // add new book to data
       return book 
+    },
+    editAuthor: (root, args) => {
+      const author = authors.find(author => author.name === args.name) // find returns undefined if no matching value fount
+      if (!author) {
+        return null
+      }
+      const updated = { ...author, ...args }
+      authors = authors.map(current => current.name === args.name ? updated : current )
+      return updated
     }
   }
 }
