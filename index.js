@@ -1,20 +1,35 @@
 const { ApolloServer, UserInputError, gql } = require('apollo-server');
-const { v1: uuid } = require('uuid')
-let books = require('./data/booksData')
-let authors = require('./data/authorsData')
+const mongoose = require('mongoose');
+
+const Book = require('./models/Book');
+const Author = require('./models/Author');
+const connectionString = require('./constants')
 
 /*
  * Saattaisi olla järkevämpää assosioida kirja ja sen tekijä tallettamalla kirjan yhteyteen tekijän nimen sijaan tekijän id
  * Yksinkertaisuuden vuoksi tallennamme kuitenkin kirjan yhteyteen tekijän nimen
 */
 
+mongoose.set('useFindAndModify', false);
+
+console.log('connecting to', connectionString);
+
+const options = {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+}
+
+mongoose.connect(connectionString, options)
+  .then(() => console.log('connected to mongodb'))
+  .catch(err => console.log('error connecting to mongodb:', err.message));
+
 const typeDefs = gql`
   type Book {
     title: String!
     published: Int!
-    author: String!
-    id: String!
+    author: Author!
     genres: [String!]!
+    id: ID!
   }
   type Author {
     name: String!
