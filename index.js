@@ -59,53 +59,53 @@ const typeDefs = gql`
 
 const resolvers = {
   Query: {
-    bookCount: () => books.length,
-    authorCount: () => authors.length,
+    bookCount: () => Book.collection.countDocuments(),
+    authorCount: () =>Author.collection.countDocuments(),
     allBooks: (root, args) => {
-      const authorFilter = book => book.author === args.author
-      const genreFilter = book => book.genres.includes(args.genre)
-      if (args.author && args.genre) {
-        const byAuthor = books.filter(authorFilter)
-        return byAuthor.filter(genreFilter)
-      }
-      if (args.author) {
-        return books.filter(authorFilter)
-      }
-      if (args.genre) {
-        return books.filter(genreFilter)
-      } else {
-        return books
-      }
+      return Book.find({}); 
     },
-    allAuthors: () => authors
+      // const authorFilter = book => book.author === args.author
+      // const genreFilter = book => book.genres.includes(args.genre)
+      // if (args.author && args.genre) {
+      //   const byAuthor = books.filter(authorFilter)
+      //   return byAuthor.filter(genreFilter)
+      // }
+      // if (args.author) {
+      //   return books.filter(authorFilter)
+      // }
+      // if (args.genre) {
+      //   return books.filter(genreFilter)
+      // } else {
+      //   return books
+      // }
+    
+    allAuthors: () => Author.find({}) // return value is a promise
   },
-  Author: {
-    bookCount: (root, args) => {
-      const booksWritten = books.filter(book => book.author === root.name)
-      return booksWritten.length
-    }
-  },
+  // Author: {
+  //   bookCount: (root, args) => {
+  //     const booksWritten = books.filter(book => book.author === root.name)
+  //     return booksWritten.length
+  //   }
+  // },
   Mutation: {
     addBook: (root, args) => { 
-      const book = { ...args, id: uuid() } // create book object from passed in parameters and give id
-      if (!books.some(book => book.author === args.author)) { // check if author already in data
-        const author = { name: args.author, id: uuid() } // creat author object and give id
-        authors = authors.concat(author) // add new author to authors
-      }
-      books = books.concat(book) // add new book to data
-      return book 
-    },
-    editAuthor: (root, args) => {
-      const author = authors.find(author => author.name === args.name) // find returns undefined if no matching value fount
-      if (!author) {
-        return null
-      }
-      const updated = { ...author, ...args }
-      authors = authors.map(current => current.name === args.name ? updated : current )
-      return updated
+      const book = new Book({ ...args });
+      return book.save();
+    }, 
+    //   if (!books.some(book => book.author === args.author)) { // check if author already in data
+    //     const author = { name: args.author, id: uuid() } // creat author object and give id
+    //     authors = authors.concat(author) // add new author to authors
+    //   }
+    //   books = books.concat(book) // add new book to data
+    //   return book 
+    // },
+    editAuthor: async (root, args) => {
+      const author = await Author.findOne({ name: args.name })
+      author.born = args.born;
+      return author.save();
     }
   }
-}
+};
 
 const server = new ApolloServer({
   typeDefs,
